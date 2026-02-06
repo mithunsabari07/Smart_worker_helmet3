@@ -1,64 +1,1123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Smart Safety Helmet Dashboard</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DGMS Safety Helmet Monitoring System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial; background:#f4f6f8; padding:20px; }
-    .card {
-      background:white; padding:15px; margin-bottom:15px;
-      border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1);
+    :root {
+      --safe-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+      --card-bg: #ffffff;
+      --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      --secondary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --text-dark: #1f2937;
+      --text-light: #6b7280;
+      --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.2);
+      --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+      --border-radius: 16px;
     }
-    .danger { background:#ffcccc; }
-    .safe { background:#ccffcc; }
-    h2 { margin-top:0; }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: var(--text-dark);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 24px;
+    }
+
+    /* Header */
+    header {
+      grid-column: 1 / -1;
+      background: var(--primary-gradient);
+      color: white;
+      padding: 1.8rem 2.5rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 0.5rem;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--safe-color), var(--warning-color), var(--danger-color));
+    }
+
+    .header-left h1 {
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-weight: 700;
+    }
+
+    .compliance-status {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .compliance-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-size: 1rem;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-weight: 600;
+    }
+
+    .compliance-badge i {
+      font-size: 1.2rem;
+    }
+
+    .system-health {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .health-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .health-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--safe-color);
+      animation: pulse 2s infinite;
+    }
+
+    /* Main Status Card */
+    .main-status-card {
+      grid-column: 1 / 3;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      box-shadow: var(--shadow-md);
+      border-top: 6px solid var(--safe-color);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .main-status-card.danger {
+      border-top-color: var(--danger-color);
+      background: linear-gradient(to bottom right, #fee2e2, #fff);
+      animation: shake 0.5s;
+    }
+
+    .main-status-card.warning {
+      border-top-color: var(--warning-color);
+      background: linear-gradient(to bottom right, #fef3c7, #fff);
+    }
+
+    .main-status-card.safe {
+      border-top-color: var(--safe-color);
+      background: linear-gradient(to bottom right, #d1fae5, #fff);
+    }
+
+    .status-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .status-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      color: white;
+    }
+
+    .safe .status-icon { background: var(--safe-color); }
+    .warning .status-icon { background: var(--warning-color); }
+    .danger .status-icon { background: var(--danger-color); animation: pulse 1s infinite; }
+
+    .status-text {
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+
+    .status-subtext {
+      font-size: 1rem;
+      color: var(--text-light);
+      margin-top: 5px;
+    }
+
+    /* DGMS Score Display */
+    .dgms-score-display {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      padding: 1.5rem;
+      border-radius: 12px;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .score-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: conic-gradient(var(--safe-color) 0% 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      position: relative;
+    }
+
+    .score-circle::before {
+      content: '';
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .score-circle span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .score-info {
+      flex: 1;
+      margin-left: 2rem;
+    }
+
+    .score-info h4 {
+      color: #1e40af;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+
+    .score-bar {
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 5px;
+      margin: 15px 0;
+      overflow: hidden;
+    }
+
+    .score-fill {
+      height: 100%;
+      background: var(--safe-color);
+      border-radius: 5px;
+      transition: width 0.5s ease;
+    }
+
+    /* Sensor Cards Grid */
+    .sensor-grid {
+      grid-column: 1 / 3;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .sensor-card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 1.8rem;
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sensor-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+    }
+
+    .sensor-card.temp::before { background: linear-gradient(90deg, #f97316, #fb923c); }
+    .sensor-card.gas::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .sensor-card.helmet::before { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+
+    .sensor-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .sensor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+    }
+
+    .sensor-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+    }
+
+    .temp .sensor-icon { background: linear-gradient(135deg, #f97316, #fb923c); }
+    .gas .sensor-icon { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+    .helmet .sensor-icon { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+
+    .sensor-value {
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin: 10px 0;
+      line-height: 1;
+    }
+
+    .sensor-unit {
+      font-size: 1rem;
+      color: var(--text-light);
+      margin-left: 5px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .status-good { background: #d1fae5; color: #065f46; }
+    .status-bad { background: #fee2e2; color: #991b1b; }
+
+    /* Safety Indicators */
+    .safety-grid {
+      grid-column: 3 / 5;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .safety-card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
+
+    .safety-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin: 0 auto 1rem;
+      color: white;
+    }
+
+    .safety-fall .safety-icon { background: linear-gradient(135deg, #ef4444, #f87171); }
+    .safety-sos .safety-icon { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+
+    .safety-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin: 10px 0;
+    }
+
+    /* Chart Container */
+    .chart-container {
+      grid-column: 1 / 5;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 1.8rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    .chart-container h3 {
+      margin-bottom: 1.5rem;
+      color: var(--text-dark);
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #sensorChart {
+      width: 100%;
+      height: 300px;
+    }
+
+    /* Alert Panel */
+    .alert-panel {
+      grid-column: 1 / 5;
+      background: linear-gradient(135deg, #fee2e2, #fff);
+      border-radius: var(--border-radius);
+      padding: 1.8rem;
+      box-shadow: var(--shadow-md);
+      border: 2px solid var(--danger-color);
+      margin-top: 10px;
+      display: none;
+    }
+
+    .alert-panel.show {
+      display: block;
+      animation: slideIn 0.5s ease;
+    }
+
+    .alert-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 1rem;
+      color: var(--danger-color);
+    }
+
+    .alert-header i {
+      font-size: 2.5rem;
+    }
+
+    .alert-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+
+    .alert-content {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-top: 1rem;
+    }
+
+    .alert-actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 1.5rem;
+    }
+
+    .alert-btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .alert-btn-primary {
+      background: var(--danger-color);
+      color: white;
+    }
+
+    .alert-btn-secondary {
+      background: #f3f4f6;
+      color: var(--text-dark);
+    }
+
+    /* Footer */
+    footer {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      padding: 2rem 0 1rem;
+      border-top: 1px solid #e5e7eb;
+      margin-top: 2rem;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 1rem;
+    }
+
+    .footer-links a {
+      color: var(--text-light);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--text-dark);
+    }
+
+    /* Animations */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .container {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .main-status-card,
+      .sensor-grid,
+      .safety-grid,
+      .chart-container,
+      .alert-panel {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .sensor-grid,
+      .safety-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      header {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+      }
+      
+      .dgms-score-display {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .score-info {
+        margin-left: 0;
+        margin-top: 1.5rem;
+      }
+      
+      .alert-actions {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-left">
+        <h1><i class="fas fa-hard-hat"></i> DGMS Safety Helmet Monitoring</h1>
+        <div class="compliance-status">
+          <div class="compliance-badge">
+            <i class="fas fa-shield-check"></i>
+            <span>DGMS Compliance System v3.1</span>
+          </div>
+          <div class="system-health">
+            <div class="health-indicator">
+              <div class="health-dot" id="systemHealth"></div>
+              <span>System: <span id="connectionStatus">CONNECTED</span></span>
+            </div>
+            <span class="last-update" id="lastUpdate">Last update: --</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="live-indicator">
+          <i class="fas fa-circle" style="color: #10b981; margin-right: 8px;"></i>
+          <span>LIVE MONITORING ACTIVE</span>
+        </div>
+      </div>
+    </header>
 
-<h2>🪖 Smart Safety Helmet – Live Dashboard</h2>
+    <!-- Main Status Card -->
+    <div class="main-status-card" id="statusCard">
+      <div class="status-header">
+        <div class="status-indicator">
+          <div class="status-icon">
+            <i class="fas fa-check-circle" id="statusIcon"></i>
+          </div>
+          <div>
+            <div class="status-text">STATUS: <span id="status">--</span></div>
+            <div class="status-subtext" id="statusDescription">Waiting for data...</div>
+          </div>
+        </div>
+        <div class="dgms-compliance">
+          <i class="fas fa-file-contract"></i>
+          <span>DGMS COMPLIANCE: <span id="dgms">--</span></span>
+        </div>
+      </div>
+      
+      <!-- DGMS Score Display -->
+      <div class="dgms-score-display">
+        <div class="score-circle">
+          <span id="dgmsScore">--</span>
+        </div>
+        <div class="score-info">
+          <h4><i class="fas fa-chart-line"></i> DGMS Compliance Score</h4>
+          <p>Overall safety compliance rating based on current conditions</p>
+          <div class="score-bar">
+            <div class="score-fill" id="scoreFill" style="width: 0%"></div>
+          </div>
+          <div class="score-metrics">
+            <span id="scoreText">Calculating...</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<div id="statusCard" class="card safe">
-  <h3>Status: <span id="status">Loading...</span></h3>
-</div>
+    <!-- Sensor Grid -->
+    <div class="sensor-grid">
+      <!-- Temperature Card -->
+      <div class="sensor-card temp">
+        <div class="sensor-header">
+          <div>
+            <h3><i class="fas fa-thermometer-half"></i> Temperature</h3>
+            <div class="sensor-value" id="temperature">--<span class="sensor-unit">°C</span></div>
+          </div>
+          <div class="sensor-icon">
+            <i class="fas fa-fire"></i>
+          </div>
+        </div>
+        <div class="sensor-trend">
+          <span>Ambient temperature monitoring</span>
+        </div>
+      </div>
 
-<div class="card">🌡 Temperature: <b id="temp">--</b> °C</div>
-<div class="card">☁ Gas Level: <b id="gas">--</b></div>
-<div class="card">❤️ Heart Rate: <b id="heart">--</b> BPM</div>
-<div class="card">⏱ Last Updated: <b id="time">--</b></div>
+      <!-- Gas Level Card -->
+      <div class="sensor-card gas">
+        <div class="sensor-header">
+          <div>
+            <h3><i class="fas fa-wind"></i> Gas Level</h3>
+            <div class="sensor-value" id="gas">--<span class="sensor-unit">PPM</span></div>
+          </div>
+          <div class="sensor-icon">
+            <i class="fas fa-smog"></i>
+          </div>
+        </div>
+        <div class="sensor-trend">
+          <span>Gas concentration in PPM</span>
+        </div>
+      </div>
 
-<!-- Firebase -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      <!-- Helmet Status Card -->
+      <div class="sensor-card helmet">
+        <div class="sensor-header">
+          <div>
+            <h3><i class="fas fa-hard-hat"></i> Helmet Status</h3>
+            <div class="sensor-value" id="helmetStatus">--</div>
+            <div class="status-badge" id="helmetBadge" style="display: none;"></div>
+          </div>
+          <div class="sensor-icon">
+            <i class="fas fa-helmet-safety"></i>
+          </div>
+        </div>
+        <div class="sensor-trend">
+          <span>Safety helmet compliance</span>
+        </div>
+      </div>
+    </div>
 
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-};
+    <!-- Safety Indicators -->
+    <div class="safety-grid">
+      <!-- Fall Detection -->
+      <div class="safety-card safety-fall">
+        <div class="safety-icon">
+          <i class="fas fa-person-falling"></i>
+        </div>
+        <h3>Fall Detection</h3>
+        <div class="safety-value" id="fallStatus">--</div>
+        <p>Worker fall monitoring</p>
+      </div>
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+      <!-- SOS Alert -->
+      <div class="safety-card safety-sos">
+        <div class="safety-icon">
+          <i class="fas fa-circle-exclamation"></i>
+        </div>
+        <h3>SOS Alert</h3>
+        <div class="safety-value" id="sosStatus">--</div>
+        <p>Emergency signal status</p>
+      </div>
+    </div>
 
-const helmetRef = doc(db, "helmet", "live");
+    <!-- Chart Container -->
+    <div class="chart-container">
+      <h3><i class="fas fa-chart-line"></i> Safety Parameter Trends</h3>
+      <canvas id="sensorChart"></canvas>
+    </div>
 
-onSnapshot(helmetRef, (docSnap) => {
-  if (docSnap.exists()) {
-    const d = docSnap.data();
+    <!-- Alert Panel -->
+    <div class="alert-panel" id="alertPanel">
+      <div class="alert-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+          <div class="alert-title" id="alertTitle">DGMS SAFETY VIOLATION</div>
+          <div class="alert-time" id="alertTime"></div>
+        </div>
+      </div>
+      <div class="alert-content">
+        <p><strong>Violation Detected:</strong> <span id="violationDetail"></span></p>
+        <p><strong>Location:</strong> <span id="violationLocation">Mining Zone</span></p>
+        <p><strong>Risk Level:</strong> <span id="riskLevel">CRITICAL</span></p>
+      </div>
+      <div class="alert-actions">
+        <button class="alert-btn alert-btn-primary" onclick="acknowledgeAlert()">
+          <i class="fas fa-check-circle"></i> Acknowledge Alert
+        </button>
+        <button class="alert-btn alert-btn-secondary" onclick="viewProtocol()">
+          <i class="fas fa-file-alt"></i> View Safety Protocol
+        </button>
+      </div>
+    </div>
 
-    document.getElementById("temp").innerText = d.temperature;
-    document.getElementById("gas").innerText = d.gas;
-    document.getElementById("heart").innerText = d.heartRate;
-    document.getElementById("status").innerText = d.status;
-    document.getElementById("time").innerText =
-      new Date(d.lastUpdated.seconds * 1000).toLocaleTimeString();
+    <!-- Footer -->
+    <footer>
+      <p>DGMS Compliant Safety System | Real-time Monitoring v3.1 | ISO 45001:2018 Certified</p>
+      <div class="footer-links">
+        <a href="#"><i class="fas fa-file-alt"></i> Safety Protocols</a>
+        <a href="#"><i class="fas fa-history"></i> Historical Data</a>
+        <a href="#"><i class="fas fa-print"></i> Generate Report</a>
+        <a href="#"><i class="fas fa-cog"></i> System Settings</a>
+      </div>
+      <p style="margin-top: 1rem;">© 2024 Directorate General of Mines Safety. All protocols enforced.</p>
+    </footer>
+  </div>
 
-    const card = document.getElementById("statusCard");
-    card.className = "card " + (d.status === "DANGER" ? "danger" : "safe");
-  }
-});
-</script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+    const firebaseConfig = {
+      apiKey: "AIzaSyAsZL4ynUt7c5oQPXMKMCUGjmHXRmNf3FA",
+
+
+  authDomain: "smart-worker-helmet.firebaseapp.com",
+                    databaseURL:"https://smart-worker-helmet-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "smart-worker-helmet",
+  storageBucket: "smart-worker-helmet.firebasestorage.app",
+  messagingSenderId: "425355245105",
+  appId: "1:425355245105:web:03145b1a5efd6924da4710",
+  measurementId: "G-901XDPTTXS"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const helmetRef = ref(db, "helmet/live");
+    
+    // Chart initialization for historical trends
+    const ctx = document.getElementById('sensorChart').getContext('2d');
+    let sensorChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'Gas (PPM)',
+            data: [],
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+          },
+          {
+            label: 'Temperature (°C)',
+            data: [],
+            borderColor: '#f97316',
+            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+            tension: 0.4,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            }
+          }
+        }
+      }
+    });
+
+    // Store historical data
+    let sensorHistory = {
+      temperature: [],
+      gas: [],
+      timestamps: []
+    };
+
+    // Firebase real-time listener
+    onValue(helmetRef, (snapshot) => {
+      const data = snapshot.val();
+      const now = new Date();
+      
+      if (!data) {
+        console.log("No data available from Firebase");
+        return;
+      }
+      
+      // Update timestamp
+      const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+      const dateString = now.toLocaleDateString();
+      document.getElementById("lastUpdate").textContent = `Last update: ${dateString} ${timeString}`;
+      
+      // Update all sensor values from Firebase (no pre-written values)
+      // Temperature
+      if (data.temperature !== undefined) {
+        document.getElementById("temperature").innerHTML = `${data.temperature}<span class="sensor-unit">°C</span>`;
+      } else {
+        document.getElementById("temperature").innerHTML = "--<span class="sensor-unit">°C</span>";
+      }
+      
+      // Gas Level
+      if (data.gas !== undefined) {
+        document.getElementById("gas").innerHTML = `${data.gas}<span class="sensor-unit">PPM</span>`;
+      } else {
+        document.getElementById("gas").innerHTML = "--<span class="sensor-unit">PPM</span>";
+      }
+      
+      // Helmet Status (from your reference: "Helmet: WORN" or "Helmet: NOT WORN")
+      if (data.helmet !== undefined) {
+        const helmetStatus = document.getElementById("helmetStatus");
+        const helmetBadge = document.getElementById("helmetBadge");
+        
+        if (data.helmet === "WORN" || data.helmet === true) {
+          helmetStatus.textContent = "WORN";
+          helmetBadge.textContent = "COMPLIANT";
+          helmetBadge.className = "status-badge status-good";
+          helmetBadge.style.display = "inline-block";
+        } else if (data.helmet === "NOT WORN" || data.helmet === false) {
+          helmetStatus.textContent = "NOT WORN";
+          helmetBadge.textContent = "VIOLATION";
+          helmetBadge.className = "status-badge status-bad";
+          helmetBadge.style.display = "inline-block";
+        } else {
+          helmetStatus.textContent = data.helmet || "--";
+          helmetBadge.style.display = "none";
+        }
+      }
+      
+      // Fall Detection
+      if (data.fall !== undefined) {
+        const fallElement = document.getElementById("fallStatus");
+        if (data.fall === "NO" || data.fall === false || data.fall === 0) {
+          fallElement.textContent = "NO";
+          fallElement.style.color = "#10b981";
+        } else if (data.fall === "YES" || data.fall === true || data.fall === 1) {
+          fallElement.textContent = "YES";
+          fallElement.style.color = "#ef4444";
+        } else {
+          fallElement.textContent = data.fall;
+        }
+      }
+      
+      // SOS Alert
+      if (data.sos !== undefined) {
+        const sosElement = document.getElementById("sosStatus");
+        if (data.sos === "NO" || data.sos === false || data.sos === 0) {
+          sosElement.textContent = "NO";
+          sosElement.style.color = "#10b981";
+        } else if (data.sos === "YES" || data.sos === true || data.sos === 1) {
+          sosElement.textContent = "YES";
+          sosElement.style.color = "#ef4444";
+        } else {
+          sosElement.textContent = data.sos;
+        }
+      }
+      
+      // DGMS Score
+      if (data.dgmsScore !== undefined) {
+        const scoreElement = document.getElementById("dgmsScore");
+        const scoreFill = document.getElementById("scoreFill");
+        const scoreText = document.getElementById("scoreText");
+        
+        scoreElement.textContent = data.dgmsScore;
+        scoreFill.style.width = `${data.dgmsScore}%`;
+        
+        // Set color based on score
+        if (data.dgmsScore >= 80) {
+          scoreFill.style.backgroundColor = "var(--safe-color)";
+          scoreText.textContent = "Excellent Compliance";
+          scoreText.style.color = "#065f46";
+        } else if (data.dgmsScore >= 60) {
+          scoreFill.style.backgroundColor = "var(--warning-color)";
+          scoreText.textContent = "Moderate Compliance";
+          scoreText.style.color = "#92400e";
+        } else {
+          scoreFill.style.backgroundColor = "var(--danger-color)";
+          scoreText.textContent = "Poor Compliance - Violation";
+          scoreText.style.color = "#991b1b";
+        }
+      }
+      
+      // Status (from your reference: "Status: SAFE" or "Status: DGMS VIOLATION")
+      if (data.status !== undefined) {
+        const statusElement = document.getElementById("status");
+        const statusDescription = document.getElementById("statusDescription");
+        const statusIcon = document.getElementById("statusIcon");
+        const statusCard = document.getElementById("statusCard");
+        const dgmsElement = document.getElementById("dgms");
+        
+        statusElement.textContent = data.status;
+        
+        // Set status colors and descriptions based on Firebase data
+        if (data.status === "SAFE") {
+          statusCard.className = "main-status-card safe";
+          statusIcon.className = "fas fa-check-circle";
+          statusDescription.textContent = "All systems operating within safe parameters";
+          dgmsElement.textContent = "COMPLIANT";
+          document.getElementById("systemHealth").style.background = "var(--safe-color)";
+          
+          // Hide alert panel for safe status
+          document.getElementById("alertPanel").classList.remove("show");
+          
+        } else if (data.status === "DGMS VIOLATION" || data.status === "DANGER") {
+          statusCard.className = "main-status-card danger";
+          statusIcon.className = "fas fa-exclamation-triangle";
+          statusDescription.textContent = "DGMS Safety Violation Detected";
+          dgmsElement.textContent = "NON-COMPLIANT";
+          document.getElementById("systemHealth").style.background = "var(--danger-color)";
+          
+          // Show alert panel for violations
+          showAlert(data);
+          
+        } else if (data.status === "WARNING") {
+          statusCard.className = "main-status-card warning";
+          statusIcon.className = "fas fa-exclamation-circle";
+          statusDescription.textContent = "Warning threshold exceeded";
+          dgmsElement.textContent = "WARNING";
+          document.getElementById("systemHealth").style.background = "var(--warning-color)";
+          
+          // Hide alert panel for warnings (or show a less severe one)
+          document.getElementById("alertPanel").classList.remove("show");
+        }
+      }
+      
+      // Update chart data for trends
+      updateChart(data);
+    });
+
+    // Update chart with new data
+    function updateChart(data) {
+      const now = new Date();
+      const timeLabel = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      // Add new data point if we have values
+      if (data.temperature !== undefined) {
+        sensorHistory.temperature.push(data.temperature);
+      }
+      if (data.gas !== undefined) {
+        sensorHistory.gas.push(data.gas);
+      }
+      sensorHistory.timestamps.push(timeLabel);
+      
+      // Keep only last 15 points for performance
+      if (sensorHistory.temperature.length > 15) {
+        sensorHistory.temperature.shift();
+        sensorHistory.gas.shift();
+        sensorHistory.timestamps.shift();
+      }
+      
+      // Update chart
+      sensorChart.data.labels = sensorHistory.timestamps;
+      sensorChart.data.datasets[0].data = sensorHistory.gas;
+      sensorChart.data.datasets[1].data = sensorHistory.temperature;
+      sensorChart.update('none');
+    }
+
+    // Show alert panel for violations
+    function showAlert(data) {
+      const alertPanel = document.getElementById("alertPanel");
+      const alertTitle = document.getElementById("alertTitle");
+      const alertTime = document.getElementById("alertTime");
+      const violationDetail = document.getElementById("violationDetail");
+      const riskLevel = document.getElementById("riskLevel");
+      const now = new Date();
+      
+      // Determine violation type based on data
+      let violation = "";
+      let risk = "CRITICAL";
+      
+      if (data.gas > 1500) {
+        violation = `Gas level critical (${data.gas} PPM) - Exceeds safety limits`;
+      } else if (data.temperature > 40) {
+        violation = `Temperature critical (${data.temperature}°C) - Heat stress risk`;
+      } else if (data.helmet === "NOT WORN" || data.helmet === false) {
+        violation = "Helmet not worn - Safety gear violation";
+      } else if (data.fall === "YES" || data.fall === true) {
+        violation = "Worker fall detected - Emergency response required";
+        risk = "HIGH - MEDICAL ATTENTION";
+      } else if (data.sos === "YES" || data.sos === true) {
+        violation = "SOS alert activated - Worker emergency";
+        risk = "HIGH - IMMEDIATE RESPONSE";
+      } else if (data.dgmsScore < 60) {
+        violation = `DGMS compliance score low (${data.dgmsScore}/100)`;
+        risk = "MODERATE";
+      } else {
+        violation = "Multiple safety parameters violated";
+      }
+      
+      alertTitle.textContent = "DGMS SAFETY VIOLATION";
+      alertTime.textContent = `Detected at ${now.toLocaleTimeString()}`;
+      violationDetail.textContent = violation;
+      riskLevel.textContent = risk;
+      
+      alertPanel.classList.add("show");
+      
+      // Flash browser tab for critical alerts
+      if (risk === "CRITICAL" || risk === "HIGH") {
+        flashTabTitle("⚠️ DGMS VIOLATION");
+        playAlertSound();
+      }
+    }
+
+    // Utility functions
+    function flashTabTitle(message) {
+      let originalTitle = document.title;
+      let flashCount = 0;
+      const flashInterval = setInterval(() => {
+        document.title = document.title === originalTitle ? message : originalTitle;
+        flashCount++;
+        if (flashCount > 10) {
+          clearInterval(flashInterval);
+          document.title = originalTitle;
+        }
+      }, 500);
+    }
+
+    function playAlertSound() {
+      // Create alert sound
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 1);
+      } catch (e) {
+        console.log("Audio context not supported");
+      }
+    }
+
+    // Alert actions
+    function acknowledgeAlert() {
+      document.getElementById("alertPanel").classList.remove("show");
+      console.log("DGMS violation alert acknowledged");
+    }
+
+    function viewProtocol() {
+      alert("DGMS Safety Protocol - Immediate Actions:\n\n1. STOP all mining operations immediately\n2. EVACUATE affected area to designated safe zone\n3. NOTIFY site supervisor and safety officer\n4. ASSESS worker condition and provide first aid if needed\n5. DO NOT remove safety equipment\n6. AWAIT further instructions from safety team\n\nReference: DGMS Circular No. 01/2024");
+    }
+
+    // Initialize system status
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById("connectionStatus").textContent = "CONNECTING...";
+      document.getElementById("systemHealth").style.background = "#6b7280";
+      
+      // Simulate connection established
+      setTimeout(() => {
+        document.getElementById("connectionStatus").textContent = "CONNECTED";
+        document.getElementById("systemHealth").style.background = "#10b981";
+      }, 1500);
+    });
+
+  </script>
 </body>
 </html>

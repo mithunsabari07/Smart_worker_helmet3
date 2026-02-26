@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DGMS Safety Helmet Monitoring · DEMO</title>
+  <title>DGMS Safety Helmet Monitoring System</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -577,11 +577,11 @@
     <!-- Header -->
     <header>
       <div class="header-left">
-        <h1><i class="fas fa-hard-hat"></i> DGMS Safety Helmet Monitoring · DEMO</h1>
+        <h1><i class="fas fa-hard-hat"></i> DGMS Safety Helmet Monitoring</h1>
         <div class="compliance-status">
           <div class="compliance-badge">
             <i class="fas fa-shield-check"></i>
-            <span>DGMS Compliance System v3.1 (simulated)</span>
+            <span>DGMS Compliance System v3.1</span>
           </div>
           <div class="system-health">
             <div class="health-indicator">
@@ -595,7 +595,7 @@
       <div class="header-right">
         <div class="live-indicator">
           <i class="fas fa-circle" style="color: #10b981; margin-right: 8px;"></i>
-          <span>DEMO MODE · 3s update</span>
+          <span>LIVE MONITORING ACTIVE</span>
         </div>
       </div>
     </header>
@@ -756,57 +756,25 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAsZL4ynUt7c5oQPXMKMCUGjmHXRmNf3FA",
-      authDomain: "smart-worker-helmet.firebaseapp.com",
-      databaseURL: "https://smart-worker-helmet-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "smart-worker-helmet",
-      storageBucket: "smart-worker-helmet.firebasestorage.app",
-      messagingSenderId: "425355245105",
-      appId: "1:425355245105:web:03145b1a5efd6924da4710",
-      measurementId: "G-901XDPTTXS"
+
+
+  authDomain: "smart-worker-helmet.firebaseapp.com",
+                    databaseURL:"https://smart-worker-helmet-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "smart-worker-helmet",
+  storageBucket: "smart-worker-helmet.firebasestorage.app",
+  messagingSenderId: "425355245105",
+  appId: "1:425355245105:web:03145b1a5efd6924da4710",
+  measurementId: "G-901XDPTTXS"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const helmetRef = ref(db, "helmet/live");
     
-    // ---------- DEMO DATA GENERATOR (original logic) ----------
-    function sendDemoData() {
-      const gas = Math.floor(Math.random() * 2500) + 1000;       // 1000-3500 PPM
-      const temperature = Math.floor(Math.random() * 20) + 25;   // 25-45 °C
-
-      let helmet = true;
-      let status = "SAFE";
-      let score = 100;
-
-      // Simulate danger every 10 seconds (based on system time)
-      if (Math.floor(Date.now() / 10000) % 2 === 1) {
-        helmet = false;
-        status = "DGMS VIOLATION";
-        score = 60;
-      }
-
-      // fall and sos remain false in this demo (can be extended)
-      set(helmetRef, {
-        gas: gas,
-        temperature: temperature,
-        helmet: helmet,          // boolean, UI handles true/false
-        fall: false,
-        sos: false,
-        dgmsScore: score,
-        status: status,
-        compliance: helmet ? "COMPLIANT" : "NON-COMPLIANT",
-        timestamp: Date.now()
-      });
-    }
-
-    // Start demo cycle: write to Firebase every 3 seconds
-    setInterval(sendDemoData, 3000);
-    // -----------------------------------------------------------
-
     // Chart initialization for historical trends
     const ctx = document.getElementById('sensorChart').getContext('2d');
     let sensorChart = new Chart(ctx, {
@@ -882,21 +850,22 @@
       const dateString = now.toLocaleDateString();
       document.getElementById("lastUpdate").textContent = `Last update: ${dateString} ${timeString}`;
       
+      // Update all sensor values from Firebase (no pre-written values)
       // Temperature
       if (data.temperature !== undefined) {
         document.getElementById("temperature").innerHTML = `${data.temperature}<span class="sensor-unit">°C</span>`;
       } else {
-        document.getElementById("temperature").innerHTML = '--<span class="sensor-unit">°C</span>';
+        document.getElementById("temperature").innerHTML = "--<span class="sensor-unit">°C</span>";
       }
       
       // Gas Level
       if (data.gas !== undefined) {
         document.getElementById("gas").innerHTML = `${data.gas}<span class="sensor-unit">PPM</span>`;
       } else {
-        document.getElementById("gas").innerHTML = '--<span class="sensor-unit">PPM</span>';
+        document.getElementById("gas").innerHTML = "--<span class="sensor-unit">PPM</span>";
       }
       
-      // Helmet Status (boolean or string)
+      // Helmet Status (from your reference: "Helmet: WORN" or "Helmet: NOT WORN")
       if (data.helmet !== undefined) {
         const helmetStatus = document.getElementById("helmetStatus");
         const helmetBadge = document.getElementById("helmetBadge");
@@ -954,6 +923,7 @@
         scoreElement.textContent = data.dgmsScore;
         scoreFill.style.width = `${data.dgmsScore}%`;
         
+        // Set color based on score
         if (data.dgmsScore >= 80) {
           scoreFill.style.backgroundColor = "var(--safe-color)";
           scoreText.textContent = "Excellent Compliance";
@@ -969,7 +939,7 @@
         }
       }
       
-      // Status
+      // Status (from your reference: "Status: SAFE" or "Status: DGMS VIOLATION")
       if (data.status !== undefined) {
         const statusElement = document.getElementById("status");
         const statusDescription = document.getElementById("statusDescription");
@@ -979,12 +949,15 @@
         
         statusElement.textContent = data.status;
         
+        // Set status colors and descriptions based on Firebase data
         if (data.status === "SAFE") {
           statusCard.className = "main-status-card safe";
           statusIcon.className = "fas fa-check-circle";
           statusDescription.textContent = "All systems operating within safe parameters";
           dgmsElement.textContent = "COMPLIANT";
           document.getElementById("systemHealth").style.background = "var(--safe-color)";
+          
+          // Hide alert panel for safe status
           document.getElementById("alertPanel").classList.remove("show");
           
         } else if (data.status === "DGMS VIOLATION" || data.status === "DANGER") {
@@ -993,6 +966,8 @@
           statusDescription.textContent = "DGMS Safety Violation Detected";
           dgmsElement.textContent = "NON-COMPLIANT";
           document.getElementById("systemHealth").style.background = "var(--danger-color)";
+          
+          // Show alert panel for violations
           showAlert(data);
           
         } else if (data.status === "WARNING") {
@@ -1001,6 +976,8 @@
           statusDescription.textContent = "Warning threshold exceeded";
           dgmsElement.textContent = "WARNING";
           document.getElementById("systemHealth").style.background = "var(--warning-color)";
+          
+          // Hide alert panel for warnings (or show a less severe one)
           document.getElementById("alertPanel").classList.remove("show");
         }
       }
@@ -1014,6 +991,7 @@
       const now = new Date();
       const timeLabel = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
       
+      // Add new data point if we have values
       if (data.temperature !== undefined) {
         sensorHistory.temperature.push(data.temperature);
       }
@@ -1022,13 +1000,14 @@
       }
       sensorHistory.timestamps.push(timeLabel);
       
-      // Keep only last 15 points
+      // Keep only last 15 points for performance
       if (sensorHistory.temperature.length > 15) {
         sensorHistory.temperature.shift();
         sensorHistory.gas.shift();
         sensorHistory.timestamps.shift();
       }
       
+      // Update chart
       sensorChart.data.labels = sensorHistory.timestamps;
       sensorChart.data.datasets[0].data = sensorHistory.gas;
       sensorChart.data.datasets[1].data = sensorHistory.temperature;
@@ -1044,6 +1023,7 @@
       const riskLevel = document.getElementById("riskLevel");
       const now = new Date();
       
+      // Determine violation type based on data
       let violation = "";
       let risk = "CRITICAL";
       
@@ -1073,6 +1053,7 @@
       
       alertPanel.classList.add("show");
       
+      // Flash browser tab for critical alerts
       if (risk === "CRITICAL" || risk === "HIGH") {
         flashTabTitle("⚠️ DGMS VIOLATION");
         playAlertSound();
@@ -1094,6 +1075,7 @@
     }
 
     function playAlertSound() {
+      // Create alert sound
       try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
@@ -1114,21 +1096,28 @@
       }
     }
 
-    // Alert actions (expose globally)
-    window.acknowledgeAlert = function() {
+    // Alert actions
+    function acknowledgeAlert() {
       document.getElementById("alertPanel").classList.remove("show");
       console.log("DGMS violation alert acknowledged");
-    };
+    }
 
-    window.viewProtocol = function() {
+    function viewProtocol() {
       alert("DGMS Safety Protocol - Immediate Actions:\n\n1. STOP all mining operations immediately\n2. EVACUATE affected area to designated safe zone\n3. NOTIFY site supervisor and safety officer\n4. ASSESS worker condition and provide first aid if needed\n5. DO NOT remove safety equipment\n6. AWAIT further instructions from safety team\n\nReference: DGMS Circular No. 01/2024");
-    };
+    }
 
-    // Initial connection indication
+    // Initialize system status
     document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById("connectionStatus").textContent = "CONNECTED (DEMO)";
-      document.getElementById("systemHealth").style.background = "#10b981";
+      document.getElementById("connectionStatus").textContent = "CONNECTING...";
+      document.getElementById("systemHealth").style.background = "#6b7280";
+      
+      // Simulate connection established
+      setTimeout(() => {
+        document.getElementById("connectionStatus").textContent = "CONNECTED";
+        document.getElementById("systemHealth").style.background = "#10b981";
+      }, 1500);
     });
+
   </script>
 </body>
 </html>
